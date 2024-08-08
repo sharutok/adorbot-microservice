@@ -1,0 +1,6 @@
+questionswhat products are approved by LRS give me the resposne in hindi
+
+responsecontent='LRS द्वारा मंजूर किए गए उत्पादों में सुपरबॉन्ड एसएस और मेटालबॉन्ड माइल्ड स्टील जनरल पर्पस शामिल हैं।' response_metadata={'token_usage': {'completion_tokens': 100, 'prompt_tokens': 2768, 'total_tokens': 2868}, 'model_name': 'gpt-3.5-turbo', 'system_fingerprint': None, 'finish_reason': 'stop', 'logprobs': None} id='run-9b2063c2-1e9c-4d9a-bce8-a42eb356305a-0' ['data\\Welding-Equipment-2023.pdf:81:0', 'data\\Welding-Equipment-2023.pdf:77:0', 'data\\Welding-Electrode-2023.pdf:6:0', 'data\\video catalouge.pdf:0:0', 'data\\Welding-Electrode-2023.pdf:4:0', 'data\\Welding-Electrode-2023.pdf:15:0', 'data\\Welding-Electrode-2023.pdf:12:0']
+
+---------END-----------
+
