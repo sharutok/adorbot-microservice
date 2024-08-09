@@ -12,12 +12,6 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
-from flask_jwt_extended import (
-    JWTManager,
-    create_access_token,
-    jwt_required,
-    get_jwt_identity,
-)
 
 
 CHROMA_PATH = "chroma"
@@ -56,10 +50,13 @@ def query_rag(query_text: str):
 
 
 app = Flask(__name__)
-app.config["JWT_SECRET_KEY"] = os.environ("JWT_SECRET_KEY")
-jwt = JWTManager(app)
+# app.config["JWT_SECRET_KEY"] = os.environ("JWT_SECRET_KEY")
+# jwt = JWTManager(app)
 
-@app.route('/generate-jwt',)
+# @app.route('/generate-jwt',methods=['GET'])
+# def get_jwt():
+#     access_token = create_access_token(identity=os.environ("JWT_SECRET_IDENTITY"))
+#     return access_token
 
 
 @app.route("/generate/text/", methods=["POST"])
@@ -72,20 +69,13 @@ def hello_world():
     t2 = time.time()
     print("{} secs".format((t2 - t1)))
 
-    save_to_db(
-        questions=request_query,
-        _response=data.replace("\\n", "\n"),
-        response_status=False,
-        meta_response=response
-        )
-
-    return {
-        "question": request_query,
+    return json.dumps({
+        "questions": request_query,
         "response": data.replace("\\n", "\n"),
         "mess": "OK",
         "status_code": 200,
         "meta_response":response
-        }
+        })
 
 
 @app.route("/add-files/", methods=["POST"])
@@ -114,23 +104,3 @@ def clean_database():
             "error": e,
             "status_code": 400,
         }
-
-
-def save_to_db(questions, _response, response_status, meta_response):
-    try:
-        url = "http://localhost:8000/conv/20283e81-65be-4106-818f-f015bb67a10f/"
-
-        payload = json.dumps(
-            {
-                "user_id": "20283e81-65be-4106-818f-f015bb67a10f",
-                "questions": questions,
-                "response": _response,
-                "response_status": response_status,
-                "other_info": meta_response,
-            }
-        )
-        headers = {"Content-Type": "application/json"}
-        response = requests.request("POST", url, headers=headers, data=payload)
-        print(response.text)        
-    except Exception as e:
-        print("error in save_to_db",e)
