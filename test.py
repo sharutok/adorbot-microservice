@@ -23,7 +23,7 @@ print(len(questions))
 
 url = "http://localhost:5000/generate/text"
 
-if False:
+if True:
     for q in questions:
         data = {"questions": q}
 
@@ -34,6 +34,3 @@ if False:
             print("Generated Text:", generated_text)
         else:
             print("Failed to call the API:", response.status_code)
-
-from output_Copy import a
-print(len(a))

@@ -1,5 +1,4 @@
 import boto3
-import argparse
 import os
 import shutil
 from langchain.document_loaders.pdf import PyPDFDirectoryLoader

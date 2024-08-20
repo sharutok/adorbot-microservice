@@ -26,6 +26,8 @@ deepdiff==7.0.1
 Deprecated==1.2.14
 distro==1.9.0
 emoji==2.11.1
+environs==9.5.0
+et-xmlfile==1.1.0
 exceptiongroup==1.2.1
 fastapi==0.110.2
 filelock==3.13.4
@@ -79,6 +81,7 @@ numpy==1.26.4
 oauthlib==3.2.2
 onnxruntime==1.17.3
 openai==1.23.2
+openpyxl==3.1.5
 opentelemetry-api==1.24.0
 opentelemetry-exporter-otlp-proto-common==1.24.0
 opentelemetry-exporter-otlp-proto-grpc==1.24.0
@@ -93,6 +96,7 @@ ordered-set==4.1.0
 orjson==3.10.1
 overrides==7.7.0
 packaging==23.2
+pandas==2.2.2
 pluggy==1.5.0
 posthog==3.5.0
 protobuf==4.25.3
@@ -103,6 +107,7 @@ pydantic==2.7.0
 pydantic_core==2.18.1
 Pygments==2.17.2
 PyJWT==2.9.0
+pymilvus==2.4.5
 pypdf==4.2.0
 PyPika==0.48.9
 pyproject_hooks==1.0.0
@@ -112,6 +117,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-iso639==2024.2.7
 python-magic==0.4.27
+pytz==2024.1
 PyYAML==6.0.1
 rapidfuzz==3.8.1
 regex==2024.4.16
@@ -136,6 +142,8 @@ tqdm==4.66.2
 typer==0.12.3
 typing-inspect==0.9.0
 typing_extensions==4.11.0
+tzdata==2024.1
+ujson==5.10.0
 unstructured==0.13.3
 unstructured-client==0.22.0
 urllib3==2.2.1

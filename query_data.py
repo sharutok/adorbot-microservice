@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 from langchain.vectorstores.chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
@@ -33,6 +34,7 @@ def query_rag(query_text: str):
     results = db.similarity_search_with_score(query_text, k=7)
 
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     prompt = prompt_template.format(context=context_text, question=query_text)
 
@@ -43,21 +45,15 @@ def query_rag(query_text: str):
 
     sources = [doc.metadata.get("id", None) for doc, _score in results]
     formatted_response = f"{response_text} {sources}"
-    write_response_to_file("questions" + query_text + "\n")
-    write_response_to_file("response" + formatted_response + "\n")
+
+    write_response_to_file("Time " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
+    write_response_to_file("questions " + query_text + "\n")
+    write_response_to_file("response " + formatted_response + "\n")
     write_response_to_file("---------END-----------" + "\n")
     return formatted_response
 
 
 app = Flask(__name__)
-# app.config["JWT_SECRET_KEY"] = os.environ("JWT_SECRET_KEY")
-# jwt = JWTManager(app)
-
-# @app.route('/generate-jwt',methods=['GET'])
-# def get_jwt():
-#     access_token = create_access_token(identity=os.environ("JWT_SECRET_IDENTITY"))
-#     return access_token
-
 
 @app.route("/generate/text/", methods=["POST"])
 def hello_world():
