@@ -7,20 +7,25 @@ from langchain.schema.document import Document
 from get_embedding_function import get_embedding_function
 from langchain.vectorstores.chroma import Chroma
 from urllib.parse import urlparse
+from utils import CHROMA
+# CHROMA_PATH = "chroma"
+# DATA_PATH = "data"
 
-CHROMA_PATH = "chroma"
-DATA_PATH = "data"
 
-def main():
+def main(chroma_db, data_source):
+
     # download_all_files_from_bucket()
-    # Create (or update) the data store.
-    documents = load_documents()
-    chunks = split_documents(documents)
-    add_to_chroma(chunks)
 
-def load_documents():
-    document_loader = PyPDFDirectoryLoader(DATA_PATH)
+    # Create (or update) the data store.
+    documents = load_documents(data_source)
+    chunks = split_documents(documents)
+    add_to_chroma(chunks,chroma_db)
+
+
+def load_documents(data_source):
+    document_loader = PyPDFDirectoryLoader(data_source)
     return document_loader.load()
+
 
 def split_documents(documents: list[Document]):
     text_splitter = RecursiveCharacterTextSplitter(
@@ -31,10 +36,11 @@ def split_documents(documents: list[Document]):
     )
     return text_splitter.split_documents(documents)
 
-def add_to_chroma(chunks: list[Document]):
+
+def add_to_chroma(chunks: list[Document], data_source):
     # Load the existing database.
     db = Chroma(
-        persist_directory=CHROMA_PATH, embedding_function=get_embedding_function()
+        persist_directory=data_source, embedding_function=get_embedding_function()
     )
 
     # Calculate Page IDs.
@@ -59,8 +65,8 @@ def add_to_chroma(chunks: list[Document]):
     else:
         print("✅ No new documents to add")
 
-def calculate_chunk_ids(chunks):
 
+def calculate_chunk_ids(chunks):
     # This will create IDs like "data/monopoly.pdf:6:2"
     # Page Source : Page Number : Chunk Index
 
@@ -86,9 +92,11 @@ def calculate_chunk_ids(chunks):
         chunk.metadata["id"] = chunk_id
     return chunks
 
-def clear_database():
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
+
+def clear_database(chroma_db):
+    if os.path.exists(chroma_db):
+        shutil.rmtree(chroma_db)
+
 
 def download_all_files_from_bucket():
     # Parse the S3 URI

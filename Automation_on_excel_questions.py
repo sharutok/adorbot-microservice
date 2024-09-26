@@ -25,7 +25,7 @@ url = "http://localhost:5000/generate/text"
 
 if True:
     for q in questions:
-        data = {"questions": q}
+        data = {"questions": q, "which_db": "PDF"}
 
         response = requests.post(url, json=data)
 
