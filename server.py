@@ -23,6 +23,7 @@ def hello_world():
     t1 = time.time()
 
     request_query = request.json["questions"]
+    
     which_db = "PDF"
     print(which_db)
     if which_db in list(CHROMA):

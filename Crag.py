@@ -19,7 +19,9 @@ from dotenv import load_dotenv
 from langsmith import Client
 from langchain import hub
 import json
+
 load_dotenv()
+
 
 def query_rag(request_query, chroma_db, data_source):
     t1 = time.time()
@@ -55,7 +57,10 @@ def query_rag(request_query, chroma_db, data_source):
     grade_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system),
-            ("human", "Retrieved document: \n\n {document} \n\n User question: {question}"),
+            (
+                "human",
+                "Retrieved document: \n\n {document} \n\n User question: {question}",
+            ),
         ]
     )
 
@@ -69,18 +74,18 @@ def query_rag(request_query, chroma_db, data_source):
 
     ### Generate
     # Prompt
-    prompt = hub.pull("rlm/rag-prompt")
+    prompt = ChatPromptTemplate.from_messages([
+  ("human", """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+    Question: {question} 
+    Context: {context} 
+    Answer:"""),
+    ])
 
     # LLM
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
     # Chain
     rag_chain = prompt | llm | StrOutputParser()
-
-    # Run
-    # generation = rag_chain.invoke({"context": docs, "question": question})
-
-    ### Question Re-writer
 
     # LLM
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -107,7 +112,7 @@ def query_rag(request_query, chroma_db, data_source):
     rewritten_question = question_rewriter.invoke({"question": question})
 
     # Output the rewritten question
-    question=rewritten_question
+    question = rewritten_question
 
     ### Search
 
@@ -192,7 +197,11 @@ def query_rag(request_query, chroma_db, data_source):
         else:
             print("---GRADE: DOCUMENT NOT RELEVANT 😱😱😱---")
             web_search = "Yes"
-        return {"documents": filtered_docs, "question": question, "web_search": web_search}
+        return {
+            "documents": filtered_docs,
+            "question": question,
+            "web_search": web_search,
+        }
 
     def transform_query(state):
         """
@@ -238,7 +247,8 @@ def query_rag(request_query, chroma_db, data_source):
 
     ### Edges
 
-    _data_source=[]
+    _data_source = []
+
     def decide_to_generate(state):
         """
         Determines whether to generate an answer, or re-generate a question.
@@ -297,9 +307,7 @@ def query_rag(request_query, chroma_db, data_source):
     app = workflow.compile()
 
     # Run
-    inputs = {
-        "question": question
-    }
+    inputs = {"question": question}
     for output in app.stream(inputs):
         for key, value in output.items():
             pprint(f"Node '{key}':")
@@ -309,7 +317,7 @@ def query_rag(request_query, chroma_db, data_source):
 
     # Final generation
     # print(value["generation"])
-    
+
     return json.dumps(
         {
             "questions": request_query,
@@ -318,7 +326,7 @@ def query_rag(request_query, chroma_db, data_source):
             "mess": "OK",
             "source_of_data": _data_source[0],
             "status_code": 200,
-            "time_taken":"{} secs".format((t2 - t1)),
+            "time_taken": "{} secs".format((t2 - t1)),
             "meta_response": {
                 "sources": json.dumps(sources),
                 # "question_rewriter": json.dumps(question_rewriter),
