@@ -8,7 +8,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from typing_extensions import TypedDict
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from langsmith import Client
 from langchain import hub
 import json
+from langchain_core.messages import HumanMessage, SystemMessage
 
 load_dotenv()
 
@@ -74,21 +75,24 @@ def query_rag(request_query, chroma_db, data_source):
 
     ### Generate
     # Prompt
-    prompt = ChatPromptTemplate.from_messages([
-  ("human", """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
-    Question: {question} 
-    Context: {context} 
-    Answer:"""),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "human",
+                """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question.\n
+                If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n
+                Question: {question} 
+                Context: {context} 
+                Answer:""",
+            ),
+        ]
+    )
 
     # LLM
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
     # Chain
     rag_chain = prompt | llm | StrOutputParser()
-
-    # LLM
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
     # System prompt to set the context for the LLM
     system = """You are a question re-writer that converts an input question to a better version that is optimized 
@@ -165,7 +169,7 @@ def query_rag(request_query, chroma_db, data_source):
         print("---GENERATE---")
         question = state["question"]
         documents = state["documents"]
-
+        
         # RAG generation
         generation = rag_chain.invoke({"context": documents, "question": question})
         return {"documents": documents, "question": question, "generation": generation}

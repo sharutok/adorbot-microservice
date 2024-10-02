@@ -25,7 +25,6 @@ def hello_world():
     request_query = request.json["questions"]
     
     which_db = "PDF"
-    print(which_db)
     if which_db in list(CHROMA):
         chroma_db = CHROMA[which_db]
         data_source = DATA_SOURCE[which_db]

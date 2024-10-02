@@ -20,12 +20,17 @@ from langsmith import Client
 from langchain import hub
 import json
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain.chains import LLMChain
 
 load_dotenv()
 
 
+
 def grade_chat_history(_chat_history_):
-    t1 = time.time()
+
+    #RELIVANCE GRADER OF QUERY WITH CHAT HISTORY
+
     question = "what is diffrent type of welding positions"
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
@@ -47,7 +52,7 @@ def grade_chat_history(_chat_history_):
         If the data contains keyword(s) or semantic meaning related to the question, grade it as relevant. \n
         Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question."""
     grade_prompt = ChatPromptTemplate.from_messages(
-        [   
+        [
             ("system", system),
             (
                 "human",
@@ -68,20 +73,43 @@ def grade_chat_history(_chat_history_):
 
     print(_chat_history)
 
-    contextualize_q_system_prompt = (
-        "Given a chat history and the latest user question"
-        "which might reference context in the chat history,"
-        "formulate a standalone question which can be understood"
-        "without the chat history. Do NOT answer the question, just"
-        "reformulate it if needed and otherwise return it as is."
-    )
 
-    # Create a prompt template for contextualizing questions
-    contextualize_q_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", contextualize_q_system_prompt),
-            MessagesPlaceholder("chat_history"),
-            ("human", "{question}"),
-        ]
-    )
-    return [_chat_history,contextualize_q_prompt]
+
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a helpful assistant. Given a chat history and the latest user question, 
+            use the context from the chat history if it's relevant to the question. 
+            Otherwise, answer based on the question provided.""",
+        ),
+        MessagesPlaceholder(
+            variable_name="chat_history"
+        ),  
+        ("human", "{question}"), 
+    ]
+)
+
+# Sample question
+question = "what are all the industries are being used?"
+
+# Example chat history with prior messages
+chat_history = [
+    HumanMessage(content="what is GMAM welding?"),
+    SystemMessage(
+        content="Gas Metal Arc Welding (GMAW) is an arc welding process where an electric arc is formed between a continuous consumable electrode and the workpiece, with shielding provided by an external gas or gas mixture. The process allows for higher deposition rates compared to shielded metal arc welding and requires minimal post-weld cleaning due to the absence of fused slag. GMAW can operate using different shielding gases, leading to its subtypes known as MIG (Metal Inert Gas) and MAG (Metal Active Gas) welding."
+    ),
+]
+
+# LLM setup
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+# Define the LLM Chain
+llm_chain = LLMChain(llm=llm, prompt=prompt, output_parser=StrOutputParser())
+
+# Invoke the chain
+generation = llm_chain.invoke({"chat_history": chat_history, "question": question})
+
+# Output the generated response
+print(generation["text"])
