@@ -79,11 +79,12 @@ def query_rag(request_query, chroma_db, data_source):
         [
             (
                 "human",
-                """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question.\n
+                """You are an assistant for question-answering tasks. Strictly provide an answer in the context of Ador Welding LTD or ADOR, even if the user does not explicitly mention it.
+                Use the following pieces of retrieved context to answer the question.\n
                 If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n
                 Question: {question} 
                 Context: {context} 
-                Answer:""",
+                Answer (in the context of Ador Welding LTD or ADOR):""",
             ),
         ]
     )
@@ -96,7 +97,9 @@ def query_rag(request_query, chroma_db, data_source):
 
     # System prompt to set the context for the LLM
     system = """You are a question re-writer that converts an input question to a better version that is optimized 
-    for web search. Look at the input and try to reason about the underlying semantic intent / meaning."""
+    for web search. Look at the input and try to reason about the underlying semantic intent / meaning.
+    Stricty rewrite the question so that it is relevant to Ador Welding LTD or ADOR, even if the user does not explicitly mention it
+    """
 
     # Create the prompt template for rewriting the question
     re_write_prompt = ChatPromptTemplate.from_messages(
@@ -104,7 +107,7 @@ def query_rag(request_query, chroma_db, data_source):
             ("system", system),
             (
                 "human",
-                "Here is the initial question: \n\n {question} \n Formulate an improved question.",
+                "Here is the initial question: \n\n {question} \n Formulate an improved question that is strictly relevant to Ador Welding LTD or ADOR.",
             ),
         ]
     )
@@ -169,7 +172,7 @@ def query_rag(request_query, chroma_db, data_source):
         print("---GENERATE---")
         question = state["question"]
         documents = state["documents"]
-        
+
         # RAG generation
         generation = rag_chain.invoke({"context": documents, "question": question})
         return {"documents": documents, "question": question, "generation": generation}
@@ -317,11 +320,28 @@ def query_rag(request_query, chroma_db, data_source):
             pprint(f"Node '{key}':")
         pprint("\n---\n")
 
+    #check if the response is from internet or local
+    if _data_source[0]=="web":    
+        system = """You are a response re-writer that gives a response by saying sorry i couldnt find data locally but this is what is found online. Always be concise and polite"""
+
+        # Create the prompt template for rewriting the question
+        re_write_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system),
+                (
+                    "human",
+                    "Here is the initial response: \n\n {response} \n response by saying sorry i couldnt find data locally but this is what is found online. Always be concise and polite .",
+                ),
+            ]
+        )
+
+        question_rewriter = re_write_prompt | llm | StrOutputParser()
+
+        # Invoke the LLM with the input question
+        rewritten_question = question_rewriter.invoke({"response": value["generation"]})
+        value["generation"]=rewritten_question
+
     t2 = time.time()
-
-    # Final generation
-    # print(value["generation"])
-
     return json.dumps(
         {
             "questions": request_query,
