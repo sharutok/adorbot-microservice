@@ -28,10 +28,9 @@ def load_documents(data_source):
 
 
 def split_documents(documents: list[Document]):
-    text_splitter = RecursiveCharacterTextSplitter(
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=2000,
-        chunk_overlap=1000,
-        length_function=len,
+        chunk_overlap=200,
         is_separator_regex=False,
     )
     return text_splitter.split_documents(documents)

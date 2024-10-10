@@ -30,7 +30,7 @@ if True:
         response = requests.post(url, json=data)
 
         if response.status_code == 200:
-            generated_text = response.json().get("generated_text")
+            generated_text = response.json()
             print("Generated Text:", generated_text)
         else:
             print("Failed to call the API:", response.status_code)

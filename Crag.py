@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from get_embedding_function import get_embedding_function
 from langchain.vectorstores.chroma import Chroma
@@ -20,6 +19,8 @@ from langsmith import Client
 from langchain import hub
 import json
 from langchain_core.messages import HumanMessage, SystemMessage
+
+openai_model = "gpt-4o-mini"
 
 load_dotenv()
 
@@ -48,7 +49,7 @@ def query_rag(request_query, chroma_db, data_source):
         )
 
     # LLM with function call
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model=openai_model, temperature=0)
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
 
     # Prompt
@@ -68,7 +69,7 @@ def query_rag(request_query, chroma_db, data_source):
     retrieval_grader = grade_prompt | structured_llm_grader
     question = question
 
-    docs = db.similarity_search_with_score(question, k=7)
+    docs = db.similarity_search_with_score(question, k=8)
     doc_txt = "\n\n---\n\n".join([doc.page_content for doc, _score in docs])
     sources = [doc.metadata.get("id", None) for doc, _score in docs]
     retrieval_grader.invoke({"question": question, "document": doc_txt})
@@ -90,7 +91,7 @@ def query_rag(request_query, chroma_db, data_source):
     )
 
     # LLM
-    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model_name=openai_model, temperature=0)
 
     # Chain
     rag_chain = prompt | llm | StrOutputParser()
@@ -98,7 +99,7 @@ def query_rag(request_query, chroma_db, data_source):
     # System prompt to set the context for the LLM
     system = """You are a question re-writer that converts an input question to a better version that is optimized 
     for web search. Look at the input and try to reason about the underlying semantic intent / meaning.
-    Stricty rewrite the question so that it is relevant to Ador Welding LTD or ADOR, even if the user does not explicitly mention it
+    Stricty rewrite the question so that it is relevant to Ador Welding LTD or ADOR, even if the user does not explicitly mention it. 
     """
 
     # Create the prompt template for rewriting the question
@@ -320,9 +321,12 @@ def query_rag(request_query, chroma_db, data_source):
             pprint(f"Node '{key}':")
         pprint("\n---\n")
 
-    #check if the response is from internet or local
+    # check if the response is from internet or local
     if _data_source[0]=="web":    
-        system = """You are a response re-writer that gives a response by saying sorry i couldnt find data locally but this is what is found online. Always be concise and polite"""
+        system = """You are a response re-writer that gives a response by saying sorry i couldnt find data but this is what is found from internet.\n
+        Strictly check if the question asked is relevent to Welding, Ador Welding LTD or ADOR, Welding Consumables, Electrodes, Wires, Fluxes, Product information,
+        Product Specification or anything regarding welding if it is not relevent reply by saying to ask question regarding the relevent welding and others
+        Always be concise and polite"""
 
         # Create the prompt template for rewriting the question
         re_write_prompt = ChatPromptTemplate.from_messages(
@@ -330,7 +334,7 @@ def query_rag(request_query, chroma_db, data_source):
                 ("system", system),
                 (
                     "human",
-                    "Here is the initial response: \n\n {response} \n response by saying sorry i couldnt find data locally but this is what is found online. Always be concise and polite .",
+                    "Here is the initial response: \n\n {response} \n response by saying sorry i couldnt find data but this is what is found from internet. Always be concise and polite .",
                 ),
             ]
         )
@@ -342,6 +346,7 @@ def query_rag(request_query, chroma_db, data_source):
         value["generation"]=rewritten_question
 
     t2 = time.time()
+    print(value["generation"],"-----------",request_query)
     return json.dumps(
         {
             "questions": request_query,

@@ -18,7 +18,7 @@ from langchain.vectorstores.chroma import Chroma
 from dotenv import load_dotenv
 from langsmith import Client
 from langchain import hub
-import json
+import json 
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.chains import LLMChain
@@ -44,7 +44,7 @@ def grade_chat_history(_chat_history_):
         )
 
     # LLM with function call
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o-min", temperature=0)
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
 
     # Prompt
