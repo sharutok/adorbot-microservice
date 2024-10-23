@@ -27,11 +27,11 @@ load_dotenv()
 
 
 
-def grade_chat_history(_chat_history_):
+def grade_chat_history(_question,_chat_history_):
 
-    #RELIVANCE GRADER OF QUERY WITH CHAT HISTORY
+    # RELIVANCE GRADER OF QUERY WITH CHAT HISTORY
 
-    question = "what is diffrent type of welding positions"
+    question = _question
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
     os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
@@ -44,7 +44,7 @@ def grade_chat_history(_chat_history_):
         )
 
     # LLM with function call
-    llm = ChatOpenAI(model="gpt-4o-min", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
 
     # Prompt
@@ -63,53 +63,55 @@ def grade_chat_history(_chat_history_):
 
     retrieval_grader = grade_prompt | structured_llm_grader
     question = question
-    chat_history = _chat_history_
+    # chat_history = _chat_history_
+    # _chat_history=[]
+    # for chat in chat_history:
+    #     _response = retrieval_grader.invoke({"question": question, "document": chat[1]})
+    #     print(_response.binary_score)
+    #     if "yes" in _response.binary_score:
+    #         _chat_history.append(chat)
     _chat_history=[]
-    for chat in chat_history:
-        _response = retrieval_grader.invoke({"question": question, "document": chat[1]})
-        print(_response.binary_score)
-        if "yes" in _response.binary_score:
-            _chat_history.append(chat)
+    for chat in _chat_history_:
+        _chat_history.append(json.loads(chat)[1])
+    single_line_history="".join(_chat_history)
+    return single_line_history
 
-    print(_chat_history)
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+# prompt = ChatPromptTemplate.from_messages(
+#     [
+#         (
+#             "system",
+#             """You are a helpful assistant. Given a chat history and the latest user question, 
+#             use the context from the chat history if it's relevant to the question. 
+#             Otherwise, answer based on the question provided.""",
+#         ),
+#         MessagesPlaceholder(
+#             variable_name="chat_history"
+#         ),  
+#         ("human", "{question}"), 
+#     ]
+# )
 
+# # Sample question
+# question = "what are all the industries are being used?"
 
+# # Example chat history with prior messages
+# chat_history = [
+#     HumanMessage(content="what is GMAM welding?"),
+#     SystemMessage(
+#         content="Gas Metal Arc Welding (GMAW) is an arc welding process where an electric arc is formed between a continuous consumable electrode and the workpiece, with shielding provided by an external gas or gas mixture. The process allows for higher deposition rates compared to shielded metal arc welding and requires minimal post-weld cleaning due to the absence of fused slag. GMAW can operate using different shielding gases, leading to its subtypes known as MIG (Metal Inert Gas) and MAG (Metal Active Gas) welding."
+#     ),
+# ]
 
-prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """You are a helpful assistant. Given a chat history and the latest user question, 
-            use the context from the chat history if it's relevant to the question. 
-            Otherwise, answer based on the question provided.""",
-        ),
-        MessagesPlaceholder(
-            variable_name="chat_history"
-        ),  
-        ("human", "{question}"), 
-    ]
-)
+# # LLM setup
+# llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
-# Sample question
-question = "what are all the industries are being used?"
+# # Define the LLM Chain
+# llm_chain = LLMChain(llm=llm, prompt=prompt, output_parser=StrOutputParser())
 
-# Example chat history with prior messages
-chat_history = [
-    HumanMessage(content="what is GMAM welding?"),
-    SystemMessage(
-        content="Gas Metal Arc Welding (GMAW) is an arc welding process where an electric arc is formed between a continuous consumable electrode and the workpiece, with shielding provided by an external gas or gas mixture. The process allows for higher deposition rates compared to shielded metal arc welding and requires minimal post-weld cleaning due to the absence of fused slag. GMAW can operate using different shielding gases, leading to its subtypes known as MIG (Metal Inert Gas) and MAG (Metal Active Gas) welding."
-    ),
-]
+# # Invoke the chain
+# generation = llm_chain.invoke({"chat_history": chat_history, "question": question})
 
-# LLM setup
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-
-# Define the LLM Chain
-llm_chain = LLMChain(llm=llm, prompt=prompt, output_parser=StrOutputParser())
-
-# Invoke the chain
-generation = llm_chain.invoke({"chat_history": chat_history, "question": question})
-
-# Output the generated response
-print(generation["text"])
+# # Output the generated response
+# print(generation["text"])

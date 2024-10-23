@@ -19,15 +19,21 @@ from langsmith import Client
 from langchain import hub
 import json
 from langchain_core.messages import HumanMessage, SystemMessage
-
+from grade_chat_history import grade_chat_history
 openai_model = "gpt-4o-mini"
 
 load_dotenv()
 
 
-def query_rag(request_query, chroma_db, data_source):
+def query_rag(request_query, chroma_db, data_source,chat_history):
     t1 = time.time()
     question = request_query
+
+    corrected_chat_history=grade_chat_history(question,chat_history)
+
+    #corrected chat history
+    _corrected_chat_history=""
+    _corrected_chat_history=corrected_chat_history if corrected_chat_history else "No history"
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
     os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
@@ -51,17 +57,18 @@ def query_rag(request_query, chroma_db, data_source):
     # LLM with function call
     llm = ChatOpenAI(model=openai_model, temperature=0)
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
-
+    
     # Prompt
     system = """You are a grader assessing relevance of a retrieved document to a user question. \n 
         If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant. \n
+        Incorporate the conversation history to understand the context better and improve your re-write
         Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question."""
     grade_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system),
             (
                 "human",
-                "Retrieved document: \n\n {document} \n\n User question: {question}",
+                "Retrieved document: \n\n {document} \n\n Conversation history: \n\n {history} \n\n User question: {question}",
             ),
         ]
     )
@@ -72,7 +79,8 @@ def query_rag(request_query, chroma_db, data_source):
     docs = db.similarity_search_with_score(question, k=8)
     doc_txt = "\n\n---\n\n".join([doc.page_content for doc, _score in docs])
     sources = [doc.metadata.get("id", None) for doc, _score in docs]
-    retrieval_grader.invoke({"question": question, "document": doc_txt})
+    
+    retrieval_grader.invoke({"question": question, "document": doc_txt, "history":_corrected_chat_history})
 
     ### Generate
     # Prompt
@@ -82,6 +90,7 @@ def query_rag(request_query, chroma_db, data_source):
                 "human",
                 """You are an assistant for question-answering tasks. Strictly provide an answer in the context of Ador Welding LTD or ADOR, even if the user does not explicitly mention it.
                 Use the following pieces of retrieved context to answer the question.\n
+                Incorporate the conversation history to understand the context better and improve your re-write. \n
                 If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n
                 Question: {question} 
                 Context: {context} 
@@ -96,9 +105,12 @@ def query_rag(request_query, chroma_db, data_source):
     # Chain
     rag_chain = prompt | llm | StrOutputParser()
 
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
     # System prompt to set the context for the LLM
     system = """You are a question re-writer that converts an input question to a better version that is optimized 
     for web search. Look at the input and try to reason about the underlying semantic intent / meaning.
+    Incorporate the conversation history to understand the context better and improve your re-write.
     Stricty rewrite the question so that it is relevant to Ador Welding LTD or ADOR, even if the user does not explicitly mention it. 
     """
 
@@ -108,7 +120,7 @@ def query_rag(request_query, chroma_db, data_source):
             ("system", system),
             (
                 "human",
-                "Here is the initial question: \n\n {question} \n Formulate an improved question that is strictly relevant to Ador Welding LTD or ADOR.",
+                "\n\n Conversation history: \n\n {history} \n\n Here is the initial question: \n\n {question} \n Formulate an improved question that is strictly relevant to Ador Welding LTD or ADOR.",
             ),
         ]
     )
@@ -117,7 +129,7 @@ def query_rag(request_query, chroma_db, data_source):
     question_rewriter = re_write_prompt | llm | StrOutputParser()
 
     # Invoke the LLM with the input question
-    rewritten_question = question_rewriter.invoke({"question": question})
+    rewritten_question = question_rewriter.invoke({"question": question,"history":_corrected_chat_history})
 
     # Output the rewritten question
     question = rewritten_question
@@ -158,7 +170,7 @@ def query_rag(request_query, chroma_db, data_source):
 
         # Retrieval
         docs = db.similarity_search_with_score(question, k=8)
-        return {"documents": docs, "question": question}
+        return {"documents": docs, "question": question,"history":_corrected_chat_history}
 
     def generate(state):
         """
@@ -175,7 +187,7 @@ def query_rag(request_query, chroma_db, data_source):
         documents = state["documents"]
 
         # RAG generation
-        generation = rag_chain.invoke({"context": documents, "question": question})
+        generation = rag_chain.invoke({"context": documents, "question": question,"history":_corrected_chat_history})
         return {"documents": documents, "question": question, "generation": generation}
 
     def grade_documents(state):
@@ -196,7 +208,7 @@ def query_rag(request_query, chroma_db, data_source):
         # Score each doc
         filtered_docs = []
         web_search = "No"
-        score = retrieval_grader.invoke({"question": question, "document": documents})
+        score = retrieval_grader.invoke({"question": question, "document": documents,"history":_corrected_chat_history})
         grade = score.binary_score
 
         if grade == "yes":
@@ -227,8 +239,8 @@ def query_rag(request_query, chroma_db, data_source):
         documents = state["documents"]
 
         # Re-write question
-        better_question = question_rewriter.invoke({"question": question})
-        return {"documents": documents, "question": better_question}
+        better_question = question_rewriter.invoke({"question": question,"history":_corrected_chat_history})
+        return {"documents": documents, "question": better_question,"history":_corrected_chat_history}
 
     def web_search(state):
         """
@@ -251,7 +263,7 @@ def query_rag(request_query, chroma_db, data_source):
         web_results = Document(page_content=web_results)
         documents.append(web_results)
 
-        return {"documents": documents, "question": question}
+        return {"documents": documents, "question": question,"history":_corrected_chat_history}
 
     ### Edges
 

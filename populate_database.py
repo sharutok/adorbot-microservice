@@ -2,6 +2,7 @@ import boto3
 import os
 import shutil
 from langchain.document_loaders.pdf import PyPDFDirectoryLoader
+from langchain_community.document_loaders import UnstructuredExcelLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
 from get_embedding_function import get_embedding_function
@@ -13,16 +14,19 @@ from utils import CHROMA
 
 
 def main(chroma_db, data_source):
+    try:
+        # download_all_files_from_bucket()
+        
+        # Create (or update) the data store.
+        # for PDF
+        documents = load_documents_pdf(data_source)
+        chunks = split_documents(documents)
+        add_to_chroma(chunks,chroma_db)
+    except Exception as e:
+        print("error in main",e)
 
-    # download_all_files_from_bucket()
-
-    # Create (or update) the data store.
-    documents = load_documents(data_source)
-    chunks = split_documents(documents)
-    add_to_chroma(chunks,chroma_db)
-
-
-def load_documents(data_source):
+            
+def load_documents_pdf(data_source):
     document_loader = PyPDFDirectoryLoader(data_source)
     return document_loader.load()
 
