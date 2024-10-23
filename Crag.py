@@ -92,6 +92,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
                 Use the following pieces of retrieved context to answer the question.\n
                 Incorporate the conversation history to understand the context better and improve your re-write. \n
                 If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n
+                Converstional History : {history}
                 Question: {question} 
                 Context: {context} 
                 Answer (in the context of Ador Welding LTD or ADOR):""",
@@ -188,7 +189,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
 
         # RAG generation
         generation = rag_chain.invoke({"context": documents, "question": question,"history":_corrected_chat_history})
-        return {"documents": documents, "question": question, "generation": generation}
+        return {"documents": documents, "question": question, "generation": generation,"history":_corrected_chat_history}
 
     def grade_documents(state):
         """

@@ -30,7 +30,6 @@ def query_rag(query_text: str,chroma_db,data_source):
 
     # Search the DB.
     results = db.similarity_search_with_score(query_text, k=7)
-    print(results)
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
 
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)

@@ -30,7 +30,6 @@ load_dotenv()
 def grade_chat_history(_question,_chat_history_):
 
     # RELIVANCE GRADER OF QUERY WITH CHAT HISTORY
-
     question = _question
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
