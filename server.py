@@ -17,7 +17,6 @@ from utils import CHROMA, DATA_SOURCE, write_response_to_file
 
 app = Flask(__name__)
 
-
 @app.route("/generate/text/", methods=["POST"])
 def hello_world():
     t1 = time.time()
@@ -78,3 +77,13 @@ def clean_database():
     return {
         "status_code": 401,
     }
+
+
+    
+@app.route("/health/check",methods=["GET"])
+def healthCheck():
+    try:
+        return {"status_code": 200}
+    except Exception as e:
+          return {"status_code": 400}
+        
