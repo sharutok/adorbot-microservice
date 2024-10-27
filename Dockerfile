@@ -21,9 +21,9 @@ RUN pip install --no-cache-dir gunicorn
 COPY . /app/
 
 # Expose port 5000 for the Flask app
-EXPOSE 5001
+EXPOSE 5000
 
 # Command to run Gunicorn in production mode
-CMD ["gunicorn", "-b", "0.0.0.0:5001", "server:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "server:app"]
 
 

@@ -2,19 +2,10 @@
 version: '3'
 
 services:
-  web:
+  web-service:
     build: .
-    command: gunicorn -b 0.0.0.0:5001 server:app
-    ports:
-      - "5001:5001"
-    environment:
-      FLASK_ENV: production
-
-  nginx:
-    image: nginx:alpine
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
+    command: gunicorn -b 0.0.0.0:5000 server:app
     ports:
       - "5000:5000"
-    depends_on:
-      - web
+    environment:
+      FLASK_ENV: production
