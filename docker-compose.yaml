@@ -9,3 +9,7 @@ services:
       - "5000:5000"
     environment:
       FLASK_ENV: production
+    volumes:
+      - chroma_pdf_data:/app/CHROMA_PDF
+volumes:
+  chroma_pdf_data:
