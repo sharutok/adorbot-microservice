@@ -15,7 +15,7 @@ from utils import CHROMA
 
 def main(chroma_db, data_source):
     try:
-        
+        # download_all_files_from_bucket()
         # Create (or update) the data store.
         # for PDF
         documents = load_documents_pdf(data_source)
@@ -140,5 +140,3 @@ def download_all_files_from_bucket():
                 print(f"Successfully downloaded {object_key} to {local_file_path}")
     except Exception as e:
         print(f"Error downloading files: {e}")
-
-download_all_files_from_bucket()
