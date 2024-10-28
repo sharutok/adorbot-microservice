@@ -15,7 +15,6 @@ from utils import CHROMA
 
 def main(chroma_db, data_source):
     try:
-        # download_all_files_from_bucket()
         
         # Create (or update) the data store.
         # for PDF
@@ -103,15 +102,21 @@ def clear_database(chroma_db):
 
 def download_all_files_from_bucket():
     # Parse the S3 URI
-    s3_uri = "s3://bedrockbuckets3/Data/"
-    local_dir = "data"
+    s3_uri = "s3://awsbuckettest001/adorbot_documents/"
+    local_dir = "DATA_SOURCE_PDF"
     parsed_url = urlparse(s3_uri)
     bucket_name = parsed_url.netloc
     prefix = parsed_url.path.lstrip("/")
 
     # Initialize the S3 client
-    s3_client = boto3.client("s3")
-
+    session = boto3.Session(
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('REGION'),
+    )
+    # Initialize the S3 client using the session
+    s3_client = session.client("s3")
+    
     # Ensure the local directory exists
     os.makedirs(local_dir, exist_ok=True)
 
@@ -135,3 +140,5 @@ def download_all_files_from_bucket():
                 print(f"Successfully downloaded {object_key} to {local_file_path}")
     except Exception as e:
         print(f"Error downloading files: {e}")
+
+download_all_files_from_bucket()
