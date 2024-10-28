@@ -4,7 +4,7 @@ version: '3'
 services:
   web-service:
     build: .
-    command: gunicorn -b 0.0.0.0:5000 server:app
+    command: gunicorn --timeout 500 --workers 3 -b 0.0.0.0:5000 server:app
     ports:
       - "5000:5000"
     environment:
