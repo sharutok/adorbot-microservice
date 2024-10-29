@@ -29,7 +29,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
     t1 = time.time()
     question = request_query
 
-    corrected_chat_history=grade_chat_history(question,chat_history)
+    corrected_chat_history=grade_chat_history(question,chat_history) if len(chat_history) else []
 
     #corrected chat history
     _corrected_chat_history=""

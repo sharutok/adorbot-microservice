@@ -22,17 +22,14 @@ def hello_world():
     t1 = time.time()
 
     request_query = request.json["questions"]
-    chat_history=request.json["chat_history"]
-    
+    chat_history=request.json.get("chat_history", [])
     which_db = "PDF"
     if which_db in list(CHROMA):
         chroma_db = CHROMA[which_db]
         data_source = DATA_SOURCE[which_db]
         response = query_rag(request_query, chroma_db, data_source,chat_history)
-
         t2 = time.time()
         print("{} secs".format((t2 - t1)))
-
     return response
 
 
