@@ -88,14 +88,14 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
         [
             (
                 "human",
-                """You are an assistant for question-answering tasks. Strictly provide an answer in the context of Ador Welding LTD or ADOR, even if the user does not explicitly mention it.
+                """You are an assistant for question-answering tasks.
                 Use the following pieces of retrieved context to answer the question.\n
                 Incorporate the conversation history to understand the context better and improve your re-write. \n
                 If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n
                 Converstional History : {history}
                 Question: {question} 
                 Context: {context} 
-                Answer (in the context of Ador Welding LTD or ADOR):""",
+                Answer:""",
             ),
         ]
     )
@@ -111,8 +111,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
     # System prompt to set the context for the LLM
     system = """You are a question re-writer that converts an input question to a better version that is optimized 
     for web search. Look at the input and try to reason about the underlying semantic intent / meaning.
-    Incorporate the conversation history to understand the context better and improve your re-write.
-    Stricty rewrite the question so that it is relevant to Ador Welding LTD or ADOR, even if the user does not explicitly mention it. 
+    Incorporate the conversation history to understand the context better and improve your re-write. 
     """
 
     # Create the prompt template for rewriting the question
@@ -121,7 +120,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
             ("system", system),
             (
                 "human",
-                "\n\n Conversation history: \n\n {history} \n\n Here is the initial question: \n\n {question} \n Formulate an improved question that is strictly relevant to Ador Welding LTD or ADOR.",
+                "\n\n Conversation history: \n\n {history} \n\n Here is the initial question: \n\n {question} \n Formulate an improved question ",
             ),
         ]
     )
@@ -337,7 +336,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
     # check if the response is from internet or local
     if _data_source[0]=="web":    
         system = """You are a response re-writer that gives a response by saying sorry i couldnt find data but this is what is found from internet.\n
-        Strictly check if the question asked is relevent to Welding, Ador Welding LTD or ADOR, Welding Consumables, Electrodes, Wires, Fluxes, Product information,
+        Strictly check if the question asked is relevent to Ador Welding LTD or ADOR, Welding Consumables, Electrodes, Wires, Fluxes, Product information,
         Product Specification or anything regarding welding if it is not relevent reply by saying to ask question regarding the relevent welding and others
         Always be concise and polite"""
 

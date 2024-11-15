@@ -1,6 +1,4 @@
-# docker-compose.yml
 version: '3'
-
 services:
   web-service:
     build: .
@@ -11,5 +9,12 @@ services:
       FLASK_ENV: production
     volumes:
       - chroma_pdf_data:/app/CHROMA_PDF
+    networks:
+      - shared_network
+
 volumes:
   chroma_pdf_data:
+
+networks:
+  shared_network:
+    external: true
