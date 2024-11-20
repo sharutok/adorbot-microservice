@@ -11,8 +11,8 @@ from langchain.schema.output_parser import StrOutputParser
 from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI
 from populate_database import clear_database, main
-# from query_data import query_rag
-from Crag import query_rag
+from query_data import query_rag
+# from Crag import query_rag
 from utils import CHROMA, DATA_SOURCE, write_response_to_file
 
 app = Flask(__name__)
@@ -27,7 +27,8 @@ def hello_world():
     if which_db in list(CHROMA):
         chroma_db = CHROMA[which_db]
         data_source = DATA_SOURCE[which_db]
-        response = query_rag(request_query, chroma_db, data_source,chat_history)
+        # response = query_rag(request_query, chroma_db, data_source,chat_history)
+        response = query_rag(request_query, chroma_db, data_source)
         t2 = time.time()
         print("{} secs".format((t2 - t1)))
     return response

@@ -25,6 +25,7 @@ Answer the question based on the above context: {question}
 
 def query_rag(query_text: str,chroma_db,data_source):
     # Prepare the DB.
+    
     embedding_function = get_embedding_function()
     db = Chroma(persist_directory=chroma_db, embedding_function=embedding_function)
 
@@ -50,13 +51,26 @@ def query_rag(query_text: str,chroma_db,data_source):
     write_response_to_file("---------END-----------" + "\n")
 
     data = ((formatted_response.split("response_metadata")[0]).split("=")[1]).replace("'", "")
+    # return json.dumps(
+    #     {
+    #         "questions": query_text,
+    #         "response": data.replace("\\n", "\n"),
+    #         "mess": "OK",
+    #         "status_code": 200,
+    #         "meta_response": formatted_response,
+    #     }
+    # )
     return json.dumps(
         {
             "questions": query_text,
+            "ai_generated_questions": query_text,
             "response": data.replace("\\n", "\n"),
             "mess": "OK",
+            "source_of_data": formatted_response,
             "status_code": 200,
-            "meta_response": formatted_response,
+            "meta_response": {
+                "sources": "",
+            },
         }
     )
 
@@ -74,7 +88,6 @@ def hello_world():
         data_source = DATA_SOURCE[which_db]
         response = query_rag(request_query,chroma_db,data_source)
         
-
         data = ((response.split("response_metadata")[0]).split("=")[1]).replace("'", "")
         t2 = time.time()
         print("{} secs".format((t2 - t1)))
