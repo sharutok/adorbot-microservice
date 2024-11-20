@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import json
 from utils import CHROMA,DATA_SOURCE
 from langchain.schema.output_parser import StrOutputParser
-
+load_dotenv()
 
 PROMPT_TEMPLATE = """
 You are an assistant for question-answering tasks.Answer the question based only on the following context:
@@ -25,7 +25,11 @@ Answer the question based on the above context: {question}
 
 def query_rag(query_text: str,chroma_db,data_source):
     # Prepare the DB.
-    
+
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+    os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+
     embedding_function = get_embedding_function()
     db = Chroma(persist_directory=chroma_db, embedding_function=embedding_function)
 

@@ -2,7 +2,6 @@ import json
 import os
 import time
 from datetime import datetime
-
 from dotenv import load_dotenv
 from flask import Flask, request
 from get_embedding_function import get_embedding_function
@@ -14,7 +13,6 @@ from populate_database import clear_database, main
 from query_data import query_rag
 # from Crag import query_rag
 from utils import CHROMA, DATA_SOURCE, write_response_to_file
-
 app = Flask(__name__)
 
 @app.route("/generate/text/", methods=["POST"])
