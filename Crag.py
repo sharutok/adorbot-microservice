@@ -76,7 +76,7 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
     retrieval_grader = grade_prompt | structured_llm_grader
     question = question
 
-    docs = db.similarity_search_with_score(question, k=8)
+    docs = db.similarity_search_with_score(question, k=7)
     doc_txt = "\n\n---\n\n".join([doc.page_content for doc, _score in docs])
     sources = [doc.metadata.get("id", None) for doc, _score in docs]
     
@@ -109,9 +109,9 @@ def query_rag(request_query, chroma_db, data_source,chat_history):
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     # System prompt to set the context for the LLM
-    system = """You are a question re-writer that converts an input question to a better version that is optimized 
-    for web search. Look at the input and try to reason about the underlying semantic intent / meaning.
-    Incorporate the conversation history to understand the context better and improve your re-write. 
+    system = """You are a question re-writer that converts an input question to a better version.
+    Look at the input and try to reason about the underlying semantic intent / meaning but dont change the underlying meaning of the question.
+    Incorporate the conversation history if present to understand the context better and improve your re-write. 
     """
 
     # Create the prompt template for rewriting the question

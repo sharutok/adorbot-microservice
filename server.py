@@ -26,7 +26,7 @@ def hello_world():
         chroma_db = CHROMA[which_db]
         data_source = DATA_SOURCE[which_db]
         # response = query_rag(request_query, chroma_db, data_source,chat_history)
-        response = query_rag(request_query, chroma_db, data_source)
+        response = query_rag(request_query, chroma_db, data_source,chat_history)
         t2 = time.time()
         print("{} secs".format((t2 - t1)))
     return response

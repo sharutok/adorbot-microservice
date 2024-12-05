@@ -15,16 +15,24 @@ import json
 from utils import CHROMA,DATA_SOURCE
 from langchain.schema.output_parser import StrOutputParser
 load_dotenv()
+from grade_chat_history import grade_chat_history
+# PROMPT_TEMPLATE = """
+# You are an assistant for question-answering tasks.Answer the question based only on the following context:
+# {context}
+# ---
+# Answer the question based on the above context: {question}
+# """
 
 PROMPT_TEMPLATE = """
-You are an assistant for question-answering tasks.Answer the question based only on the following context:
-{context}
----
-Answer the question based on the above context: {question}
+You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question considering the history of the conversation. 
+If the context provides information to answer the question, respond with a concise answer in three sentences maximum using that information.
+If the context does not provide information, respond in with the don't know message.
+Chat history: {chat_history}
+Question: {question} 
+Context: {context} 
 """
 
-def query_rag(query_text: str,chroma_db,data_source):
-    # Prepare the DB.
+def query_rag(query_text: str,chroma_db,data_source,chat_history):
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
     os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
@@ -39,7 +47,13 @@ def query_rag(query_text: str,chroma_db,data_source):
 
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
-    prompt = prompt_template.format(context=context_text, question=query_text)
+    corrected_chat_history=grade_chat_history(query_text,chat_history) if len(chat_history) else []
+
+    #corrected chat history
+    _corrected_chat_history=""
+    _corrected_chat_history=corrected_chat_history if corrected_chat_history else "No history"
+    # print(_corrected_chat_history)
+    prompt = prompt_template.format(context=context_text, question=query_text,chat_history=_corrected_chat_history)
 
     model = ChatOpenAI(
         model="gpt-4o-mini",

@@ -1,3 +1,12 @@
 # GPT-3.5-turbo-0125
 # Text-embedding-ada-002-v2
 # flask --app server.py --debug run
+
+
+
+v1 code:-
+query_data.py
+
+v2 code:-
+Crag.py
+grade_chat_history.py
