@@ -4,6 +4,7 @@ from langchain.vectorstores.chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
 from get_embedding_function import get_embedding_function
 from langchain_openai import ChatOpenAI
+from langchain.schema import Document
 from flask import request
 from flask import Flask
 from populate_database import main
@@ -12,10 +13,13 @@ from utils import write_response_to_file
 import os
 from dotenv import load_dotenv
 import json
-from utils import CHROMA,DATA_SOURCE
+from utils import CHROMA, DATA_SOURCE
 from langchain.schema.output_parser import StrOutputParser
+from langchain_community.tools.tavily_search import TavilySearchResults
+
 load_dotenv()
 from grade_chat_history import grade_chat_history
+
 # PROMPT_TEMPLATE = """
 # You are an assistant for question-answering tasks.Answer the question based only on the following context:
 # {context}
@@ -26,13 +30,13 @@ from grade_chat_history import grade_chat_history
 PROMPT_TEMPLATE = """
 You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question considering the history of the conversation. 
 If the context provides information to answer the question, respond with a concise answer in three sentences maximum using that information.
-If the context does not provide information, respond in with the don't know message.
+If the context does not provide information, respond strictly by replying NO .
 Chat history: {chat_history}
 Question: {question} 
 Context: {context} 
 """
 
-def query_rag(query_text: str,chroma_db,data_source,chat_history):
+def query_rag(query_text: str, chroma_db, data_source, chat_history):
 
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
     os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
@@ -47,28 +51,59 @@ def query_rag(query_text: str,chroma_db,data_source,chat_history):
 
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
-    corrected_chat_history=grade_chat_history(query_text,chat_history) if len(chat_history) else []
-
-    #corrected chat history
-    _corrected_chat_history=""
-    _corrected_chat_history=corrected_chat_history if corrected_chat_history else "No history"
-    # print(_corrected_chat_history)
-    prompt = prompt_template.format(context=context_text, question=query_text,chat_history=_corrected_chat_history)
-
-    model = ChatOpenAI(
-        model="gpt-4o-mini",
-        api_key=os.getenv("OPENAI_API_KEY")
+    corrected_chat_history = (
+        grade_chat_history(query_text, chat_history) if len(chat_history) else []
     )
+
+    # corrected chat history
+    _corrected_chat_history = ""
+    _corrected_chat_history = (
+        corrected_chat_history if corrected_chat_history else "No history"
+    )
+    # print(_corrected_chat_history)
+    prompt = prompt_template.format(
+        context=context_text, question=query_text, chat_history=_corrected_chat_history
+    )
+
+    model = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
     response_text = model.invoke(prompt)
     sources = [doc.metadata.get("id", None) for doc, _score in results]
     formatted_response = f"{response_text} {sources}"
 
-    write_response_to_file("Time " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
+    write_response_to_file(
+        "Time " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n"
+    )
     write_response_to_file("questions " + query_text + "\n")
     write_response_to_file("response " + formatted_response + "\n")
     write_response_to_file("---------END-----------" + "\n")
 
-    data = ((formatted_response.split("response_metadata")[0]).split("=")[1]).replace("'", "")
+    data = ((formatted_response.split("response_metadata")[0]).split("=")[1]).replace(
+        "'", ""
+    )
+
+    ####### SEARCH FROM WEB #######
+    print(data.replace("\\n", "\n"))
+    if "NO" in data.replace("\\n", "\n"):
+        print("--------------SEARCHING FOR WEB--------------------")
+        searched_internet=True
+        web_search_tool = TavilySearchResults(k=3, max_results=2)
+        docs = web_search_tool.invoke({"query": query_text})
+        web_results = "\n".join([d["content"] for d in docs])
+
+        prompt = prompt_template.format(
+            context=web_results,
+            question=query_text,
+            chat_history=_corrected_chat_history,
+        )
+        response_text = model.invoke(prompt)
+        formatted_response = f"{response_text} {sources}"
+        data = (
+            (formatted_response.split("response_metadata")[0]).split("=")[1]
+        ).replace("'", "")
+    else:
+        searched_internet=False
+        print("--------------SEARCHED LOCALLY--------------------")
+
     # return json.dumps(
     #     {
     #         "questions": query_text,
@@ -80,6 +115,7 @@ def query_rag(query_text: str,chroma_db,data_source,chat_history):
     # )
     return json.dumps(
         {
+            "searched_internet":searched_internet,
             "questions": query_text,
             "ai_generated_questions": query_text,
             "response": data.replace("\\n", "\n"),
@@ -95,6 +131,7 @@ def query_rag(query_text: str,chroma_db,data_source,chat_history):
 
 app = Flask(__name__)
 
+
 @app.route("/generate/text/", methods=["POST"])
 def hello_world():
     t1 = time.time()
@@ -102,30 +139,33 @@ def hello_world():
     request_query = request.json["questions"]
     which_db = request.json["which_db"]
     if which_db in list(CHROMA):
-        chroma_db=CHROMA[which_db]
+        chroma_db = CHROMA[which_db]
         data_source = DATA_SOURCE[which_db]
-        response = query_rag(request_query,chroma_db,data_source)
-        
+        response = query_rag(request_query, chroma_db, data_source)
+
         data = ((response.split("response_metadata")[0]).split("=")[1]).replace("'", "")
         t2 = time.time()
         print("{} secs".format((t2 - t1)))
 
-        return json.dumps({
-            "questions": request_query,
-            "response": data.replace("\\n", "\n"),
-            "mess": "OK",
-            "status_code": 200,
-            "meta_response":response
-            })
+        return json.dumps(
+            {
+                "questions": request_query,
+                "response": data.replace("\\n", "\n"),
+                "mess": "OK",
+                "status_code": 200,
+                "meta_response": response,
+            }
+        )
+
 
 @app.route("/add-files/", methods=["POST"])
 def add_files():
     which_db = request.json["which_db"]
     if which_db in list(CHROMA):
         try:
-            chroma_db=CHROMA[which_db]
+            chroma_db = CHROMA[which_db]
             data_source = DATA_SOURCE[which_db]
-            main(chroma_db,data_source)
+            main(chroma_db, data_source)
             return {
                 "status_code": 200,
             }
@@ -138,7 +178,8 @@ def add_files():
         "status_code": 401,
     }
 
-@app.route("/clear/db",methods=["GET"])
+
+@app.route("/clear/db", methods=["GET"])
 def clean_database():
     which_db = request.json["which_db"]
     if which_db in list(CHROMA):

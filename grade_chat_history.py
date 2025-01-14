@@ -26,8 +26,9 @@ from langchain.chains import LLMChain
 load_dotenv()
 
 
-
 def grade_chat_history(_question,_chat_history_):
+
+    print(_question, _chat_history_)
 
     # RELIVANCE GRADER OF QUERY WITH CHAT HISTORY
     question = _question
@@ -61,15 +62,15 @@ def grade_chat_history(_question,_chat_history_):
     )
 
     retrieval_grader = grade_prompt | structured_llm_grader
-    
+
     question = question
     _chat_history=[]
     single_line_history=""
     for chat in _chat_history_:
-        _response=retrieval_grader.invoke({"question": question, "document": json.loads(chat)[1]})
-        if _response.binary_score=="yes":
-            _chat_history.append(json.loads(chat)[1])
-            single_line_history="".join(_chat_history)
-            
-    # print(single_line_history)
+        # _response=retrieval_grader.invoke({"question": question, "document": json.loads(chat)[1]})
+        # if _response.binary_score=="yes":
+        _chat_history.append(json.loads(chat)[1])
+        single_line_history="".join(_chat_history)
+
+    print(single_line_history)
     return single_line_history
