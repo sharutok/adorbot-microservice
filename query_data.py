@@ -80,7 +80,6 @@ def query_rag(query_text: str, chroma_db, data_source, chat_history):
     data = ((formatted_response.split("response_metadata")[0]).split("=")[1]).replace(
         "'", ""
     )
-
     ####### SEARCH FROM WEB #######
     print(data.replace("\\n", "\n"))
     if "NO" in data.replace("\\n", "\n"):
