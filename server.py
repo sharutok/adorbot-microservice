@@ -31,7 +31,6 @@ def hello_world():
         print("{} secs".format((t2 - t1)))
     return response
 
-
 @app.route("/add-files/", methods=["POST"])
 def add_files():
     which_db = request.json["which_db"]
