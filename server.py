@@ -74,7 +74,6 @@ def clean_database():
     }
 
 
-    
 @app.route("/health/check",methods=["GET"])
 def healthCheck():
     try:
