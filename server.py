@@ -72,7 +72,6 @@ def clean_database():
         "status_code": 401,
     }
 
-
 @app.route("/health/check",methods=["GET"])
 def healthCheck():
     try:
