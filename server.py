@@ -18,7 +18,6 @@ app = Flask(__name__)
 @app.route("/generate/text/", methods=["POST"])
 def hello_world():
     t1 = time.time()
-
     request_query = request.json["questions"]
     chat_history=request.json.get("chat_history", [])
     which_db = "PDF"
