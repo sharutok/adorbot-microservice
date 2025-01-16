@@ -124,14 +124,12 @@ def download_all_files_from_bucket():
         # List objects in the bucket
         paginator = s3_client.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
-
         for page in pages:
             for obj in page.get("Contents", []):
                 object_key = obj["Key"]
                 local_file_path = os.path.join(
                     local_dir, os.path.relpath(object_key, prefix)
                 )
-
                 # Ensure the local directory for the current file exists
                 os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
 
